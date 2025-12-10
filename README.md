@@ -83,19 +83,14 @@ The platform supports trading across multiple categories:
 
 **Repository**: [https://github.com/KoleSchimmel/CONFIDENTIAL-RAW-MATERIALS-TRADING-PLATFORM](https://github.com/KoleSchimmel/CONFIDENTIAL-RAW-MATERIALS-TRADING-PLATFORM)
 
-## 📺 Demo & Screenshots
+## 📺 Demo 
 
 ### Demo Video
 A comprehensive demonstration video showcasing the platform's features, FHE implementation, and trading workflows is available in the repository.
+
 [CONFIDENTIAL RAW MATERIALS TRADING PLATFORM.mp4](https://streamable.com/knq6w3)
 
-### On-Chain Transaction Examples
-The platform includes real transaction screenshots demonstrating:
-- Material listing with encrypted parameters
-- Order placement with confidential requirements
-- Trade matching and completion
-- Verification transactions
-- Real gas costs and transaction confirmations
+ 
 
 ## 🔐 Privacy Guarantees
 

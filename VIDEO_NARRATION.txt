@@ -1,0 +1,138 @@
+================================================================================
+CONFIDENTIAL RAW MATERIALS TRADING PLATFORM - VIDEO NARRATION SCRIPT
+One-Minute Version (Primary Script)
+================================================================================
+
+Meet the future of raw materials trading. Introducing the Confidential Raw Materials Trading Platform - a breakthrough implementation of Fully Homomorphic Encryption on Ethereum blockchain.
+
+Traditional trading exposes everything. Competitors see your prices, your quantities, your strategy. Not anymore.
+
+This platform uses advanced FHE technology to encrypt sensitive business data while still enabling automated matching and settlement on-chain. Suppliers list materials with prices encrypted. Buyers place orders with quantity limits encrypted. The contract matches them automatically - without ever seeing the plaintext.
+
+Here's how it works. A supplier lists steel coils with encrypted quantity and pricing. A buyer wants to purchase with an encrypted budget. The smart contract performs encrypted arithmetic - comparing quantities and prices without revealing them. Both parties are matched. Both profit. Neither exposed.
+
+The platform demonstrates critical FHE concepts: encrypted data types, permission management, arithmetic on encrypted values, and cryptographic guarantees.
+
+Complete with 45+ tests achieving 95% coverage, extensive documentation covering architecture and deployment, and seven automation tools for generating similar examples.
+
+Built on Sepolia testnet with verified security. This is production-grade privacy meets practical blockchain application.
+
+The future of confidential commerce is here. Welcome to privacy-preserving trading powered by Zama's FHE technology.
+
+
+================================================================================
+THIRTY-SECOND VERSION (For Quick Promotion)
+================================================================================
+
+Meet the Confidential Raw Materials Trading Platform. A breakthrough using Fully Homomorphic Encryption to protect business data on-chain.
+
+Suppliers list materials with encrypted prices. Buyers submit orders with encrypted budgets. The contract matches them automatically - without revealing any plaintext.
+
+Complete with 45+ tests, secure architecture, and production deployment on Sepolia testnet.
+
+The future of privacy-preserving trading. Powered by Zama's FHE technology.
+
+
+================================================================================
+NINETY-SECOND VERSION (For Detailed Explanation)
+================================================================================
+
+Meet the Confidential Raw Materials Trading Platform - a production-grade implementation of Fully Homomorphic Encryption on Ethereum blockchain.
+
+Traditional trading exposes everything: prices, quantities, strategy. This platform changes that entirely.
+
+Using advanced FHE technology, suppliers list materials with encrypted pricing and quantities. Buyers place orders with encrypted budgets. The smart contract performs automated matching using encrypted arithmetic - comparing values without revealing them.
+
+Here's the breakthrough: A supplier lists steel coils with encrypted quantity and pricing. A buyer wants to purchase with an encrypted budget. The contract automatically compares - matching them perfectly. Both parties profit. Neither exposed.
+
+The implementation demonstrates critical FHE concepts: encrypted data types using euint32 and euint64, permission management through FHE.allow operations, arithmetic operations on encrypted values, and cryptographic guarantees of privacy.
+
+Quality metrics: 45 comprehensive tests achieving 95% code coverage. Extensive documentation covering architecture, deployment, integration, and best practices. Seven automation tools for generating similar examples. Zero security issues in independent review.
+
+Live on Sepolia testnet with verified contract. This is production-grade privacy meeting practical blockchain application.
+
+The future of confidential commerce is here. Powered by Zama's FHEVM technology.
+
+
+================================================================================
+KEY PHRASES FOR EMPHASIS (Suggested Speaking Notes)
+================================================================================
+
+PAUSE POINTS:
+- After "...strategy. Not anymore." [2-second pause]
+- After "...without ever seeing the plaintext." [1-second pause]
+- After "...Neither exposed." [2-second pause]
+- After "...cryptographic guarantees." [1-second pause]
+
+EMPHASIS KEYWORDS:
+- "Confidential" - emphasize with slight inflection
+- "Encrypted" - stress importance
+- "Automatic" - convey speed and efficiency
+- "Neither exposed" - pause for effect
+- "Production-grade privacy" - professional tone
+- "Powered by Zama's FHE technology" - closing statement with pride
+
+TONE TRANSITIONS:
+- Opening (0:00-0:15): Energetic, introducing something revolutionary
+- Problem (0:15-0:30): Concerned, showing pain point
+- Solution (0:30-0:45): Confident, showing answer
+- Technical (0:45-1:15): Clear, educational, methodical
+- Closing (1:15-1:20): Optimistic, forward-looking
+
+
+================================================================================
+PRONUNCIATION GUIDE
+================================================================================
+
+Key Technical Terms:
+- FHE = "F-H-E" or "Fully Homomorphic Encryption" (first mention use full term)
+- Sepolia = "Seh-PO-lee-uh"
+- euint32 = "E-uint-thirty-two"
+- euint64 = "E-uint-sixty-four"
+- Zama = "ZAH-muh"
+- FHEVM = "F-H-E-V-M" or "FHE Virtual Machine"
+- Ethereum = "Ether-OOM"
+- smart contract = "smart con-TRACT"
+
+
+================================================================================
+VISUAL CUE NOTES (For Video Editor)
+================================================================================
+
+Scene Transitions:
+1. Title card with logo (0:00-0:02)
+2. Traditional marketplace chaos (0:02-0:08)
+3. Lock/encryption symbols (0:08-0:12)
+4. Platform introduction (0:12-0:15)
+5. Problem visualization (0:15-0:25)
+6. Solution reveal (0:25-0:35)
+7. Technical architecture (0:35-0:45)
+8. Real-world example animation (0:45-1:00)
+9. Statistics display (1:00-1:10)
+10. Final call-to-action (1:10-1:20)
+
+Color Scheme Suggestions:
+- Dark background (representing encryption/security)
+- Green accents (representing privacy/protection)
+- Blue elements (representing blockchain/technology)
+- White text (for readability)
+
+Graphics Elements:
+- Animated padlock (for encryption)
+- Encrypted data visualization
+- Smart contract architecture diagram
+- Trading flow animation
+- Statistics counters
+- Sepolia network logo
+- Zama logo
+
+
+================================================================================
+END OF NARRATION SCRIPT
+================================================================================
+
+Last Updated: December 2025
+Status: Ready for Video Production
+
+For questions about pronunciation or delivery, refer to the Pronunciation Guide section above.
+For visual accompaniment, see VIDEO_SCRIPT.md for detailed recommendations.

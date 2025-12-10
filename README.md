@@ -79,9 +79,9 @@ The platform supports trading across multiple categories:
 
 ## 🌐 Live Application
 
-**Website**: [https://raw-materials-trading.vercel.app/](https://raw-materials-trading.vercel.app/)
+**Website**: [https://confidential-raw-materials-trading.vercel.app/](https://confidential-raw-materials-trading.vercel.app/)
 
-**Repository**: [https://github.com/KoleSchimmel/RawMaterialsTrading](https://github.com/KoleSchimmel/RawMaterialsTrading)
+**Repository**: [https://github.com/KoleSchimmel/CONFIDENTIAL-RAW-MATERIALS-TRADING-PLATFORM](https://github.com/KoleSchimmel/CONFIDENTIAL-RAW-MATERIALS-TRADING-PLATFORM)
 
 ## 📺 Demo & Screenshots
 

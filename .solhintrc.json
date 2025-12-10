@@ -1,0 +1,31 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "code-complexity": ["warn", 7],
+    "comprehensive-interface": "warn",
+    "const-name-snakecase": "warn",
+    "contract-name-camelcase": "warn",
+    "event-name-camelcase": "warn",
+    "func-name-mixedcase": "warn",
+    "func-order": "warn",
+    "import-on-top": "error",
+    "indent": ["warn", 2],
+    "line-length": ["warn", 100],
+    "mark-callable-contracts": "off",
+    "named-parameters-mapping": "warn",
+    "no-console": "warn",
+    "no-empty-blocks": "error",
+    "no-inline-assembly": "warn",
+    "no-unused-vars": "error",
+    "not-rely-on-time": "warn",
+    "ordering": "warn",
+    "payable-fallback": "warn",
+    "quotes": ["warn", "double"],
+    "reason-string": ["warn", { "maxLength": 32 }],
+    "reentrancy": "warn",
+    "separate-by-one-line-in-contract": "warn",
+    "single-quoted-strings": "off",
+    "state-visibility": "error",
+    "use-emit-event": "warn"
+  }
+}

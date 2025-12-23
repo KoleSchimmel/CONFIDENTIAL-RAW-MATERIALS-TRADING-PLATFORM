@@ -1,33 +1,31 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
-    "outDir": "./dist",
-    "typeRoots": ["./node_modules/@types"],
-    "baseUrl": "./",
-    "paths": {
-      "*": ["node_modules/*"]
-    }
+    "declarationMap": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["hardhat/console", "node"]
   },
-  "include": [
-    "scripts/**/*",
-    "test/**/*",
-    "hardhat.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "cache",
-    "artifacts"
-  ]
+  "include": ["contracts", "scripts", "test"],
+  "exclude": ["node_modules", "dist"]
 }

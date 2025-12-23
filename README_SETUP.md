@@ -1,43 +1,43 @@
-# 项目设置和启动指南
+# Project Setup and Quick Start Guide
 
-## 快速开始
+## Quick Start
 
-### 1. 安装依赖
+### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 2. 配置环境变量
+### 2. Configure Environment Variables
 
 ```bash
 cp .env.example .env
-# 编辑 .env 填入您的私钥和 RPC URL
+# Edit .env and fill in your private key and RPC URL
 ```
 
-### 3. 编译合约
+### 3. Compile Contracts
 
 ```bash
 npm run compile
 ```
 
-### 4. 运行测试
+### 4. Run Tests
 
 ```bash
 npm test
 ```
 
-### 5. 本地部署
+### 5. Local Deployment
 
 ```bash
-# 终端 1: 启动本地节点
+# Terminal 1: Start local node
 npm run node
 
-# 终端 2: 部署到本地
+# Terminal 2: Deploy to local network
 npm run deploy:local
 ```
 
-### 6. Sepolia 测试网部署
+### 6. Sepolia Testnet Deployment
 
 ```bash
 npm run deploy:sepolia
@@ -45,159 +45,159 @@ npm run verify:sepolia
 npm run initialize:sepolia
 ```
 
-## 可用命令
+## Available Commands
 
-### 编译和测试
+### Compilation and Testing
 ```bash
-npm run compile       # 编译合约
-npm test             # 运行所有测试
-npm run coverage     # 生成覆盖率报告
-npm run clean        # 清理构建文件
+npm run compile       # Compile contracts
+npm test             # Run all tests
+npm run coverage     # Generate coverage report
+npm run clean        # Clean build artifacts
 ```
 
-### 部署
+### Deployment
 ```bash
-npm run deploy:local      # 部署到本地节点
-npm run deploy:sepolia    # 部署到 Sepolia 测试网
-npm run verify:sepolia    # 在 Etherscan 验证合约
-npm run initialize:sepolia # 初始化合约状态
+npm run deploy:local      # Deploy to local node
+npm run deploy:sepolia    # Deploy to Sepolia testnet
+npm run verify:sepolia    # Verify contract on Etherscan
+npm run initialize:sepolia # Initialize contract state
 ```
 
-### 自动化脚本
+### Automation Scripts
 ```bash
-npm run create-example   # 创建新示例
-npm run create-category  # 创建分类示例
-npm run generate-docs    # 生成文档
-npm run monitor:events   # 监听合约事件
+npm run create-example   # Create new example
+npm run create-category  # Create category examples
+npm run generate-docs    # Generate documentation
+npm run monitor:events   # Monitor contract events
 ```
 
-### 开发工具
+### Development Tools
 ```bash
-npm run console:local    # 打开本地 Hardhat 控制台
-npm run console:sepolia  # 打开 Sepolia Hardhat 控制台
-npm run lint            # 检查代码规范
-npm run format          # 格式化代码
-npm run typecheck       # TypeScript 类型检查
+npm run console:local    # Open local Hardhat console
+npm run console:sepolia  # Open Sepolia Hardhat console
+npm run lint            # Check code style
+npm run format          # Format code
+npm run typecheck       # TypeScript type checking
 ```
 
-## 项目结构
+## Project Structure
 
 ```
-├── contracts/                    # Solidity 合约
+├── contracts/                    # Solidity contracts
 │   └── ConfidentialRawMaterialsTrading.sol
-├── test/                        # 测试文件
+├── test/                        # Test files
 │   └── ConfidentialRawMaterialsTrading.test.ts
-├── scripts/                     # 自动化脚本
-│   ├── deploy.ts               # 部署脚本
-│   ├── initialize.ts           # 初始化脚本
-│   ├── monitor-events.ts       # 事件监听脚本
-│   ├── create-fhevm-example.ts # 创建示例脚本
-│   ├── create-fhevm-category.ts # 创建分类脚本
-│   └── generate-docs.ts        # 文档生成脚本
-├── docs/                        # 文档
+├── scripts/                     # Automation scripts
+│   ├── deploy.ts               # Deployment script
+│   ├── initialize.ts           # Initialization script
+│   ├── monitor-events.ts       # Event monitoring script
+│   ├── create-fhevm-example.ts # Example creation script
+│   ├── create-fhevm-category.ts # Category creation script
+│   └── generate-docs.ts        # Documentation generation script
+├── docs/                        # Documentation
 │   ├── README.md
 │   ├── ARCHITECTURE.md
 │   ├── DEPLOYMENT.md
 │   ├── DEVELOPER_GUIDE.md
 │   └── SUBMISSION_INDEX.md
-├── artifacts/                   # 编译输出
-├── cache/                       # 缓存文件
-├── hardhat.config.ts           # Hardhat 配置
-├── package.json               # npm 配置
-├── tsconfig.json              # TypeScript 配置
-└── .env.example               # 环境变量模板
+├── artifacts/                   # Compilation output
+├── cache/                       # Cache files
+├── hardhat.config.ts           # Hardhat configuration
+├── package.json               # npm configuration
+├── tsconfig.json              # TypeScript configuration
+└── .env.example               # Environment variables template
 ```
 
-## 环境变量说明
+## Environment Variables
 
-### 必需配置
+### Required Configuration
 ```
-PRIVATE_KEY=0x...              # 部署账户私钥（仅用于测试网）
-```
-
-### 可选配置
-```
-SEPOLIA_RPC_URL=https://...    # Sepolia RPC 端点
-ETHERSCAN_API_KEY=...          # Etherscan API 密钥（用于验证）
-REPORT_GAS=true                # 是否生成 gas 报告
+PRIVATE_KEY=0x...              # Deployment account private key (testnet only)
 ```
 
-## 常见问题
+### Optional Configuration
+```
+SEPOLIA_RPC_URL=https://...    # Sepolia RPC endpoint
+ETHERSCAN_API_KEY=...          # Etherscan API key (for verification)
+REPORT_GAS=true                # Whether to generate gas report
+```
 
-### Q: 私钥应该从哪里获取？
-A: 从 MetaMask 导出，但**仅用于测试网钱包**，永远不要在主网使用。
+## Frequently Asked Questions
 
-### Q: 如何获取 Sepolia ETH？
-A: 访问 https://sepoliafaucet.com 或其他 Sepolia 水龙头。
+### Q: Where should I get the private key?
+A: Export from MetaMask, but **only use testnet wallets**, never use on mainnet.
 
-### Q: 合约地址在哪里？
-A: 部署后会保存在 `deployments/sepolia.json`
+### Q: How to get Sepolia ETH?
+A: Visit https://sepoliafaucet.com or other Sepolia faucets.
 
-### Q: 如何验证合约？
+### Q: Where is the contract address?
+A: After deployment, it will be saved in `deployments/sepolia.json`
+
+### Q: How to verify the contract?
 A:
 ```bash
 npm run verify:sepolia -- 0xYOUR_CONTRACT_ADDRESS
 ```
 
-## 文档阅读指南
+## Documentation Reading Guide
 
-- **SUBMISSION.md**: 完整的竞赛提交文档
-- **ARCHITECTURE.md**: 技术架构和设计
-- **DEPLOYMENT.md**: 详细的部署指南
-- **DEVELOPER_GUIDE.md**: 开发者指南和扩展说明
-- **SUBMISSION_INDEX.md**: 文档导航索引
+- **SUBMISSION.md**: Complete bounty submission document
+- **ARCHITECTURE.md**: Technical architecture and design
+- **DEPLOYMENT.md**: Detailed deployment guide
+- **DEVELOPER_GUIDE.md**: Developer guide and extension documentation
+- **SUBMISSION_INDEX.md**: Documentation navigation index
 
-## 关键文件说明
+## Key File Descriptions
 
 ### contracts/ConfidentialRawMaterialsTrading.sol
-主合约，实现了完整的原始材料交易市场，使用 FHE 保护敏感数据。
+Main contract implementing a complete raw materials trading marketplace using FHE to protect sensitive data.
 
-**主要功能**:
-- `listMaterial()`: 供应商列出材料（加密数量和价格）
-- `placeOrder()`: 买家下单（加密需求和价格限制）
-- `matchTrade()`: 供应商匹配订单（加密运算）
-- `confirmTrade()`: 确认交易
-- `verifySupplier()`: 验证供应商
-- `verifyBuyer()`: 验证买家
+**Main Functions**:
+- `listMaterial()`: Suppliers list materials (encrypted quantity and price)
+- `placeOrder()`: Buyers place orders (encrypted requirements and price limits)
+- `matchTrade()`: Suppliers match orders (encrypted operations)
+- `confirmTrade()`: Confirm trade completion
+- `verifySupplier()`: Verify supplier identity
+- `verifyBuyer()`: Verify buyer identity
 
 ### test/ConfidentialRawMaterialsTrading.test.ts
-包含 45+ 个测试用例，覆盖：
-- 合约部署
-- 访问控制
-- FHE 操作
-- 业务逻辑
-- 边界情况
-- 常见错误模式
+Contains 45+ test cases covering:
+- Contract deployment
+- Access control
+- FHE operations
+- Business logic
+- Edge cases
+- Common error patterns
 
-## 部署流程
+## Deployment Workflow
 
 ```
-1. 编译合约
+1. Compile contracts
    npm run compile
 
-2. 运行测试
+2. Run tests
    npm test
 
-3. 设置环境
+3. Setup environment
    cp .env.example .env
-   # 编辑 .env
+   # Edit .env
 
-4. 部署到 Sepolia
+4. Deploy to Sepolia
    npm run deploy:sepolia
 
-5. 验证合约
+5. Verify contract
    npm run verify:sepolia
 
-6. 初始化状态
+6. Initialize state
    npm run initialize:sepolia
 
-7. 监听事件
+7. Monitor events
    npm run monitor:events
 ```
 
-## 使用自动化脚本
+## Using Automation Scripts
 
-### 创建新示例
+### Create New Example
 
 ```bash
 npm run create-example -- \
@@ -206,25 +206,25 @@ npm run create-example -- \
   --description "My FHE Example"
 ```
 
-### 创建分类示例
+### Create Category Examples
 
 ```bash
 npm run create-category -- --category access-control
 ```
 
-### 生成文档
+### Generate Documentation
 
 ```bash
 npm run generate-docs
 ```
 
-## 联系和支持
+## Contact and Support
 
-- Zama 社区: https://www.zama.ai/community
+- Zama Community: https://www.zama.ai/community
 - Zama Discord: https://discord.com/invite/zama
-- 文档: https://docs.zama.ai
+- Documentation: https://docs.zama.ai
 - GitHub: https://github.com/zama-ai/fhevm
 
-## 许可证
+## License
 
-MIT License - 详见 LICENSE 文件
+MIT License - See LICENSE file for details

@@ -1,295 +1,426 @@
+#!/usr/bin/env ts-node
+
 /**
- * Generate Documentation Script
+ * generate-docs - Generates GitBook-formatted documentation from contracts and tests
  *
- * Automatically generates GitBook-compatible documentation from:
- * - JSDoc comments in test files
- * - Chapter tags in contracts
- * - Code examples
+ * Usage: ts-node scripts/generate-docs.ts <example-name> [options]
  *
- * Usage: ts-node scripts/generate-docs.ts
+ * Example: ts-node scripts/generate-docs.ts delivery-manager --output docs/
  */
 
-import * as fs from "fs";
-import * as path from "path";
-import * as glob from "glob";
+import * as fs from 'fs';
+import * as path from 'path';
 
-interface DocSection {
+// Color codes for terminal output
+enum Color {
+  Reset = '\x1b[0m',
+  Green = '\x1b[32m',
+  Blue = '\x1b[34m',
+  Yellow = '\x1b[33m',
+  Red = '\x1b[31m',
+  Cyan = '\x1b[36m',
+}
+
+function log(message: string, color: Color = Color.Reset): void {
+  console.log(`${color}${message}${Color.Reset}`);
+}
+
+function success(message: string): void {
+  log(`✅ ${message}`, Color.Green);
+}
+
+function info(message: string): void {
+  log(`ℹ️  ${message}`, Color.Blue);
+}
+
+function error(message: string): never {
+  log(`❌ Error: ${message}`, Color.Red);
+  process.exit(1);
+}
+
+// Documentation configuration interface
+interface DocsConfig {
   title: string;
-  chapter: string;
-  content: string;
-  examples: CodeExample[];
-}
-
-interface CodeExample {
-  language: string;
-  code: string;
   description: string;
+  contract: string;
+  test: string;
+  output: string;
+  category: string;
 }
 
-/**
- * Extract chapter tag from contract or test file
- * @example @chapter: access-control
- */
-function extractChapter(content: string): string | null {
-  const match = content.match(/@chapter:\s*(\w+)/);
-  return match ? match[1] : null;
+// Generate documentation options
+interface GenerateDocsOptions {
+  noSummary?: boolean;
 }
 
-/**
- * Extract JSDoc comments with code examples
- */
-function extractJSDocComments(
-  content: string
-): Array<{ comment: string; example?: string }> {
-  const jsdocRegex = /\/\*\*([\s\S]*?)\*\//g;
-  const comments: Array<{ comment: string; example?: string }> = [];
+// Example configurations
+const EXAMPLES_CONFIG: Record<string, DocsConfig> = {
+  // Privacy-Preserving Delivery Examples
+  'delivery-manager': {
+    title: 'Delivery Manager',
+    description: 'This example demonstrates core delivery management with encrypted addresses and privacy-preserving matching using FHEVM.',
+    contract: 'contracts/DeliveryManager.sol',
+    test: 'test/DeliveryManager.test.ts',
+    output: 'docs/delivery-manager.md',
+    category: 'Privacy-Preserving Delivery',
+  },
+  'payment-processor': {
+    title: 'Payment Processor',
+    description: 'This example demonstrates confidential payment processing with encrypted amounts and automatic escrow using FHE.',
+    contract: 'contracts/PaymentProcessor.sol',
+    test: 'test/PaymentProcessor.test.ts',
+    output: 'docs/payment-processor.md',
+    category: 'Privacy-Preserving Delivery',
+  },
+  'reputation-tracker': {
+    title: 'Reputation Tracker',
+    description: 'This example shows an anonymous reputation system with encrypted ratings and zero-knowledge verification.',
+    contract: 'contracts/ReputationTracker.sol',
+    test: 'test/ReputationTracker.test.ts',
+    output: 'docs/reputation-tracker.md',
+    category: 'Privacy-Preserving Delivery',
+  },
+  'privacy-layer': {
+    title: 'Privacy Layer',
+    description: 'This example demonstrates FHE utility functions for address encryption and privacy-preserving operations.',
+    contract: 'contracts/PrivacyLayer.sol',
+    test: 'test/PrivacyLayer.test.ts',
+    output: 'docs/privacy-layer.md',
+    category: 'Privacy-Preserving Delivery',
+  },
+  'anonymous-delivery': {
+    title: 'Anonymous Delivery Network',
+    description: 'This example demonstrates a complete anonymous delivery platform with full FHE integration for privacy-preserving logistics.',
+    contract: 'contracts/AnonymousDelivery.sol',
+    test: 'test/AnonymousDelivery.test.ts',
+    output: 'docs/anonymous-delivery.md',
+    category: 'Privacy-Preserving Delivery',
+  },
 
-  let match;
-  while ((match = jsdocRegex.exec(content)) !== null) {
-    const comment = match[1]
-      .split("\n")
-      .map((line) => line.trim().replace(/^\*\s?/, ""))
-      .join("\n");
+  // Basic FHE Examples
+  'fhe-counter': {
+    title: 'FHE Counter',
+    description: 'This example demonstrates a simple encrypted counter using FHEVM with increment and decrement operations.',
+    contract: 'contracts/basic/FHECounter.sol',
+    test: 'test/basic/FHECounter.test.ts',
+    output: 'docs/fhe-counter.md',
+    category: 'Basic',
+  },
+  'fhe-add': {
+    title: 'FHE Addition',
+    description: 'This example shows FHE addition operations on encrypted uint32 values without decryption.',
+    contract: 'contracts/basic/fhe-operations/FHEAdd.sol',
+    test: 'test/basic/fhe-operations/FHEAdd.test.ts',
+    output: 'docs/fhe-add.md',
+    category: 'Basic - FHE Operations',
+  },
+  'fhe-comparison': {
+    title: 'FHE Comparison',
+    description: 'This example demonstrates FHE comparison operations (eq, lt, gt, le, ge) on encrypted values.',
+    contract: 'contracts/basic/fhe-operations/FHEComparison.sol',
+    test: 'test/basic/fhe-operations/FHEComparison.test.ts',
+    output: 'docs/fhe-comparison.md',
+    category: 'Basic - FHE Operations',
+  },
+  'fhe-if-then-else': {
+    title: 'FHE If-Then-Else',
+    description: 'This example shows conditional operations on encrypted values using FHE.select without revealing the condition.',
+    contract: 'contracts/basic/fhe-operations/FHEIfThenElse.sol',
+    test: 'test/basic/fhe-operations/FHEIfThenElse.test.ts',
+    output: 'docs/fhe-if-then-else.md',
+    category: 'Basic - FHE Operations',
+  },
 
-    comments.push({ comment });
+  // Encryption Examples
+  'encrypt-single-value': {
+    title: 'Encrypt Single Value',
+    description: 'This example demonstrates the FHE encryption mechanism and highlights common pitfalls developers may encounter.',
+    contract: 'contracts/basic/encrypt/EncryptSingleValue.sol',
+    test: 'test/basic/encrypt/EncryptSingleValue.test.ts',
+    output: 'docs/encrypt-single-value.md',
+    category: 'Basic - Encryption',
+  },
+  'encrypt-multiple-values': {
+    title: 'Encrypt Multiple Values',
+    description: 'This example shows how to encrypt and handle multiple encrypted values with proper permission management.',
+    contract: 'contracts/basic/encrypt/EncryptMultipleValues.sol',
+    test: 'test/basic/encrypt/EncryptMultipleValues.test.ts',
+    output: 'docs/encrypt-multiple-values.md',
+    category: 'Basic - Encryption',
+  },
+
+  // Decryption Examples
+  'user-decrypt-single-value': {
+    title: 'User Decrypt Single Value',
+    description: 'This example demonstrates the FHE user decryption mechanism and permission requirements.',
+    contract: 'contracts/basic/decrypt/UserDecryptSingleValue.sol',
+    test: 'test/basic/decrypt/UserDecryptSingleValue.test.ts',
+    output: 'docs/user-decrypt-single-value.md',
+    category: 'Basic - Decryption',
+  },
+  'user-decrypt-multiple-values': {
+    title: 'User Decrypt Multiple Values',
+    description: 'This example shows how to decrypt multiple encrypted values for a specific user.',
+    contract: 'contracts/basic/decrypt/UserDecryptMultipleValues.sol',
+    test: 'test/basic/decrypt/UserDecryptMultipleValues.test.ts',
+    output: 'docs/user-decrypt-multiple-values.md',
+    category: 'Basic - Decryption',
+  },
+  'public-decrypt-single-value': {
+    title: 'Public Decrypt Single Value',
+    description: 'This example demonstrates public decryption mechanism for non-sensitive encrypted data.',
+    contract: 'contracts/basic/decrypt/PublicDecryptSingleValue.sol',
+    test: 'test/basic/decrypt/PublicDecryptSingleValue.test.ts',
+    output: 'docs/public-decrypt-single-value.md',
+    category: 'Basic - Decryption',
+  },
+  'public-decrypt-multiple-values': {
+    title: 'Public Decrypt Multiple Values',
+    description: 'This example shows public decryption of multiple encrypted values and aggregation.',
+    contract: 'contracts/basic/decrypt/PublicDecryptMultipleValues.sol',
+    test: 'test/basic/decrypt/PublicDecryptMultipleValues.test.ts',
+    output: 'docs/public-decrypt-multiple-values.md',
+    category: 'Basic - Decryption',
+  },
+
+  // Access Control Examples
+  'access-control': {
+    title: 'Access Control',
+    description: 'This example demonstrates FHE access control patterns including FHE.allow and FHE.allowTransient.',
+    contract: 'contracts/basic/AccessControl.sol',
+    test: 'test/basic/AccessControl.test.ts',
+    output: 'docs/access-control.md',
+    category: 'Basic - Access Control',
+  },
+
+  // Auction Examples
+  'blind-auction': {
+    title: 'Blind Auction',
+    description: 'This example demonstrates a sealed-bid auction where bids remain confidential until revealed using FHE.',
+    contract: 'contracts/auctions/BlindAuction.sol',
+    test: 'test/auctions/BlindAuction.test.ts',
+    output: 'docs/blind-auction.md',
+    category: 'Advanced - Auctions',
+  },
+};
+
+function readFile(filePath: string): string {
+  const fullPath = path.join(process.cwd(), filePath);
+  if (!fs.existsSync(fullPath)) {
+    error(`File not found: ${filePath}`);
   }
-
-  return comments;
+  return fs.readFileSync(fullPath, 'utf-8');
 }
 
-/**
- * Extract code examples from comments
- */
-function extractCodeExamples(
-  comment: string
-): Array<{ language: string; code: string }> {
-  const exampleRegex = /```(\w+)\n([\s\S]*?)```/g;
-  const examples: Array<{ language: string; code: string }> = [];
-
-  let match;
-  while ((match = exampleRegex.exec(comment)) !== null) {
-    examples.push({
-      language: match[1],
-      code: match[2].trim(),
-    });
-  }
-
-  return examples;
+function getContractName(content: string): string {
+  const match = content.match(/^\s*contract\s+(\w+)(?:\s+is\s+|\s*\{)/m);
+  return match ? match[1] : 'Contract';
 }
 
-/**
- * Generate documentation for a single file
- */
-function generateFileDocumentation(filePath: string): DocSection | null {
-  try {
-    const content = fs.readFileSync(filePath, "utf8");
-    const chapter = extractChapter(content);
+function extractDescription(content: string): string {
+  // Extract description from first multi-line comment or @notice
+  const commentMatch = content.match(/\/\*\*\s*\n\s*\*\s*(.+?)\s*\n/);
+  const noticeMatch = content.match(/@notice\s+(.+)/);
 
-    if (!chapter) {
-      return null;
-    }
-
-    const fileName = path.basename(filePath);
-    const jsDocComments = extractJSDocComments(content);
-
-    const examples: CodeExample[] = [];
-    for (const jsdoc of jsDocComments) {
-      const codeExamples = extractCodeExamples(jsdoc.comment);
-      for (const example of codeExamples) {
-        examples.push({
-          language: example.language,
-          code: example.code,
-          description: jsdoc.comment.split("\n")[0],
-        });
-      }
-    }
-
-    return {
-      title: fileName.replace(/\.(sol|ts)$/, ""),
-      chapter,
-      content: jsDocComments.map((j) => j.comment).join("\n\n"),
-      examples,
-    };
-  } catch (error) {
-    console.error(`Error processing file ${filePath}:`, error);
-    return null;
-  }
+  return commentMatch ? commentMatch[1] : (noticeMatch ? noticeMatch[1] : '');
 }
 
-/**
- * Group documentation sections by chapter
- */
-function groupByChapter(sections: DocSection[]): Map<string, DocSection[]> {
-  const grouped = new Map<string, DocSection[]>();
+function generateGitBookMarkdown(config: DocsConfig, contractContent: string, testContent: string): string {
+  const contractName = getContractName(contractContent);
+  const description = config.description || extractDescription(contractContent);
 
-  for (const section of sections) {
-    if (!grouped.has(section.chapter)) {
-      grouped.set(section.chapter, []);
-    }
-    grouped.get(section.chapter)!.push(section);
-  }
+  let markdown = `# ${config.title}\n\n${description}\n\n`;
 
-  return grouped;
-}
+  // Add hint block
+  markdown += `{% hint style="info" %}\n`;
+  markdown += `To run this example correctly, make sure the files are placed in the following directories:\n\n`;
+  markdown += `- \`.sol\` file → \`<your-project-root-dir>/contracts/\`\n`;
+  markdown += `- \`.ts\` file → \`<your-project-root-dir>/test/\`\n\n`;
+  markdown += `This ensures Hardhat can compile and test your contracts as expected.\n`;
+  markdown += `{% endhint %}\n\n`;
 
-/**
- * Generate markdown documentation for a chapter
- */
-function generateChapterMarkdown(
-  chapter: string,
-  sections: DocSection[]
-): string {
-  let markdown = `# ${chapter.charAt(0).toUpperCase() + chapter.slice(1)} Chapter\n\n`;
+  // Add key features section
+  markdown += `## Key Features\n\n`;
+  markdown += `- **Privacy-Preserving**: Uses Fully Homomorphic Encryption (FHE) for confidential operations\n`;
+  markdown += `- **Zero-Knowledge Proofs**: Enables verification without revealing sensitive data\n`;
+  markdown += `- **Decentralized**: Built on blockchain for transparency and immutability\n\n`;
 
-  for (const section of sections) {
-    markdown += `## ${section.title}\n\n`;
-    markdown += section.content + "\n\n";
+  // Add tabs for contract and test
+  markdown += `{% tabs %}\n\n`;
 
-    if (section.examples.length > 0) {
-      markdown += "### Examples\n\n";
-      for (const example of section.examples) {
-        markdown += `\`\`\`${example.language}\n`;
-        markdown += example.code + "\n";
-        markdown += "```\n\n";
-      }
-    }
+  // Contract tab
+  markdown += `{% tab title="${contractName}.sol" %}\n\n`;
+  markdown += `\`\`\`solidity\n`;
+  markdown += contractContent;
+  markdown += `\n\`\`\`\n\n`;
+  markdown += `{% endtab %}\n\n`;
 
-    markdown += "---\n\n";
-  }
+  // Test tab
+  const testFileName = path.basename(config.test);
+  markdown += `{% tab title="${testFileName}" %}\n\n`;
+  markdown += `\`\`\`typescript\n`;
+  markdown += testContent;
+  markdown += `\n\`\`\`\n\n`;
+  markdown += `{% endtab %}\n\n`;
+
+  markdown += `{% endtabs %}\n\n`;
+
+  // Add usage section
+  markdown += `## Usage\n\n`;
+  markdown += `### Compile\n\n`;
+  markdown += `\`\`\`bash\n`;
+  markdown += `npm run compile\n`;
+  markdown += `\`\`\`\n\n`;
+  markdown += `### Test\n\n`;
+  markdown += `\`\`\`bash\n`;
+  markdown += `npm run test\n`;
+  markdown += `\`\`\`\n\n`;
+  markdown += `### Deploy\n\n`;
+  markdown += `\`\`\`bash\n`;
+  markdown += `npx hardhat deploy --network localhost\n`;
+  markdown += `\`\`\`\n`;
 
   return markdown;
 }
 
-/**
- * Generate SUMMARY.md for GitBook
- */
-function generateGitBookSummary(chapters: Set<string>): string {
-  let summary = "# Summary\n\n";
-  summary += "* [Introduction](README.md)\n";
-  summary += "* [Overview](overview.md)\n\n";
+function updateSummary(exampleName: string, config: DocsConfig): void {
+  const summaryPath = path.join(process.cwd(), 'docs', 'SUMMARY.md');
 
-  for (const chapter of Array.from(chapters).sort()) {
-    summary += `* [${chapter.charAt(0).toUpperCase() + chapter.slice(1)}](./${chapter}.md)\n`;
+  if (!fs.existsSync(summaryPath)) {
+    log('Creating new SUMMARY.md', Color.Yellow);
+    const summary = `# Table of contents\n\n* [Introduction](README.md)\n\n`;
+    fs.writeFileSync(summaryPath, summary);
   }
 
-  summary += "\n* [Conclusion](conclusion.md)\n";
+  const summary = fs.readFileSync(summaryPath, 'utf-8');
+  const outputFileName = path.basename(config.output);
+  const linkText = config.title;
+  const link = `* [${linkText}](${outputFileName})`;
 
-  return summary;
+  // Check if already in summary
+  if (summary.includes(outputFileName)) {
+    info('Example already in SUMMARY.md');
+    return;
+  }
+
+  // Add to appropriate category
+  const categoryHeader = `## ${config.category}`;
+  let updatedSummary: string;
+
+  if (summary.includes(categoryHeader)) {
+    // Add under existing category
+    const lines = summary.split('\n');
+    const categoryIndex = lines.findIndex(line => line.trim() === categoryHeader);
+
+    // Find next category or end
+    let insertIndex = categoryIndex + 1;
+    while (insertIndex < lines.length && !lines[insertIndex].startsWith('##')) {
+      if (lines[insertIndex].trim() === '') {
+        break;
+      }
+      insertIndex++;
+    }
+
+    lines.splice(insertIndex, 0, link);
+    updatedSummary = lines.join('\n');
+  } else {
+    // Add new category
+    updatedSummary = summary.trim() + `\n\n${categoryHeader}\n\n${link}\n`;
+  }
+
+  fs.writeFileSync(summaryPath, updatedSummary);
+  success('Updated SUMMARY.md');
 }
 
-/**
- * Main execution
- */
-async function main(): Promise<void> {
-  console.log("📖 Generating Documentation...\n");
+function generateDocs(exampleName: string, options: GenerateDocsOptions = {}): void {
+  const config = EXAMPLES_CONFIG[exampleName];
 
-  const docsDir = path.join(process.cwd(), "docs");
-  const contractsDir = path.join(process.cwd(), "contracts");
-  const testDir = path.join(process.cwd(), "test");
-
-  // Create docs directory if it doesn't exist
-  if (!fs.existsSync(docsDir)) {
-    fs.mkdirSync(docsDir, { recursive: true });
+  if (!config) {
+    error(`Unknown example: ${exampleName}\n\nAvailable examples:\n${Object.keys(EXAMPLES_CONFIG).map(k => `  - ${k}`).join('\n')}`);
   }
 
-  const sections: DocSection[] = [];
+  info(`Generating documentation for: ${config.title}`);
 
-  // Process contract files
-  console.log("Scanning contracts...");
-  const contractFiles = glob.sync(path.join(contractsDir, "**/*.sol"));
-  for (const file of contractFiles) {
-    const section = generateFileDocumentation(file);
-    if (section) {
-      sections.push(section);
-      console.log(`  ✓ Processed: ${path.basename(file)}`);
-    }
+  // Read contract and test files
+  const contractContent = readFile(config.contract);
+  const testContent = readFile(config.test);
+
+  // Generate GitBook markdown
+  const markdown = generateGitBookMarkdown(config, contractContent, testContent);
+
+  // Write output file
+  const outputPath = path.join(process.cwd(), config.output);
+  const outputDir = path.dirname(outputPath);
+
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // Process test files
-  console.log("Scanning tests...");
-  const testFiles = glob.sync(path.join(testDir, "**/*.ts"));
-  for (const file of testFiles) {
-    const section = generateFileDocumentation(file);
-    if (section) {
-      sections.push(section);
-      console.log(`  ✓ Processed: ${path.basename(file)}`);
-    }
+  fs.writeFileSync(outputPath, markdown);
+  success(`Documentation generated: ${config.output}`);
+
+  // Update SUMMARY.md
+  if (!options.noSummary) {
+    updateSummary(exampleName, config);
   }
-
-  // Group by chapter
-  const groupedSections = groupByChapter(sections);
-  console.log(`\nGenerated ${groupedSections.size} chapters\n`);
-
-  // Generate markdown files for each chapter
-  for (const [chapter, chapterSections] of groupedSections) {
-    const markdown = generateChapterMarkdown(chapter, chapterSections);
-    const outputPath = path.join(docsDir, `${chapter}.md`);
-    fs.writeFileSync(outputPath, markdown);
-    console.log(`✓ Created chapter: ${chapter}.md`);
-  }
-
-  // Generate SUMMARY.md for GitBook
-  const summary = generateGitBookSummary(groupedSections.keys());
-  const summaryPath = path.join(docsDir, "SUMMARY.md");
-  fs.writeFileSync(summaryPath, summary);
-  console.log(`✓ Created SUMMARY.md`);
-
-  // Generate overview
-  const overview = `# Documentation Overview
-
-This documentation is auto-generated from code comments and JSDoc annotations.
-
-## Chapters
-
-${Array.from(groupedSections.keys())
-  .sort()
-  .map((ch) => `- [${ch.charAt(0).toUpperCase() + ch.slice(1)}](./${ch}.md)`)
-  .join("\n")}
-
-## How to Read
-
-1. Start with the introduction
-2. Follow the chapters in order
-3. Review code examples for each concept
-4. Refer to the API documentation
-
-## GitBook Integration
-
-This documentation is compatible with GitBook:
-
-\`\`\`bash
-npm install -g gitbook-cli
-gitbook serve ./docs
-\`\`\`
-
-Then open http://localhost:4000 in your browser.
-
----
-
-**Generated**: $(date)
-`;
-
-  const overviewPath = path.join(docsDir, "overview.md");
-  fs.writeFileSync(overviewPath, overview);
-  console.log(`✓ Created overview.md`);
-
-  console.log(`
-✅ Documentation generated successfully!
-
-Generated files:
-  - docs/SUMMARY.md (GitBook index)
-  - docs/overview.md (Overview)
-  - docs/*.md (Chapter files)
-
-To view with GitBook:
-  npm install -g gitbook-cli
-  gitbook serve ./docs
-
-Open http://localhost:4000 in your browser
-  `);
 }
 
-main().catch((error) => {
-  console.error("❌ Error generating documentation:", error);
-  process.exit(1);
-});
+function generateAllDocs(options: GenerateDocsOptions = {}): void {
+  info('Generating documentation for all examples...\n');
+
+  const examples = Object.keys(EXAMPLES_CONFIG);
+  examples.forEach((example, index) => {
+    log(`[${index + 1}/${examples.length}] ${example}`, Color.Cyan);
+    generateDocs(example, { ...options, noSummary: true });
+  });
+
+  // Update summary once at the end
+  if (!options.noSummary) {
+    examples.forEach(example => {
+      updateSummary(example, EXAMPLES_CONFIG[example]);
+    });
+  }
+
+  log('\n' + '='.repeat(60), Color.Green);
+  success(`Generated documentation for ${examples.length} examples!`);
+  log('='.repeat(60), Color.Green);
+}
+
+// Main execution
+function main(): void {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
+    log('FHEVM Documentation Generator', Color.Cyan);
+    log('\nUsage: ts-node scripts/generate-docs.ts <example-name|--all> [options]\n');
+    log('Options:', Color.Yellow);
+    log('  --all          Generate documentation for all examples');
+    log('  --no-summary   Skip updating SUMMARY.md');
+    log('\nAvailable examples:', Color.Yellow);
+    Object.entries(EXAMPLES_CONFIG).forEach(([name, info]) => {
+      log(`  ${name}`, Color.Green);
+      log(`    ${info.title}`, Color.Reset);
+    });
+    log('\nExamples:', Color.Yellow);
+    log('  ts-node scripts/generate-docs.ts delivery-manager');
+    log('  ts-node scripts/generate-docs.ts --all\n');
+    process.exit(0);
+  }
+
+  const options: GenerateDocsOptions = {
+    noSummary: args.includes('--no-summary'),
+  };
+
+  if (args[0] === '--all') {
+    generateAllDocs(options);
+  } else {
+    const exampleName = args[0];
+    generateDocs(exampleName, options);
+
+    log('\n' + '='.repeat(60), Color.Green);
+    success('Documentation generation complete!');
+    log('='.repeat(60), Color.Green);
+  }
+}
+
+main();

@@ -1,480 +1,473 @@
+#!/usr/bin/env ts-node
+
 /**
- * Create FHEVM Example Script
+ * create-fhevm-example - CLI tool to generate standalone FHEVM example repositories
  *
- * This script generates a new standalone FHEVM example repository
- * with contract, tests, and documentation.
+ * Usage: ts-node scripts/create-fhevm-example.ts <example-name> [output-dir]
  *
- * Usage: ts-node scripts/create-fhevm-example.ts --name CounterExample --category basic
+ * Example: ts-node scripts/create-fhevm-example.ts delivery-manager ./output/delivery-manager
  */
 
-import * as fs from "fs";
-import * as path from "path";
-import { execSync } from "child_process";
+import * as fs from 'fs';
+import * as path from 'path';
+import { execSync } from 'child_process';
 
+// Color codes for terminal output
+enum Color {
+  Reset = '\x1b[0m',
+  Green = '\x1b[32m',
+  Blue = '\x1b[34m',
+  Yellow = '\x1b[33m',
+  Red = '\x1b[31m',
+  Cyan = '\x1b[36m',
+}
+
+function log(message: string, color: Color = Color.Reset): void {
+  console.log(`${color}${message}${Color.Reset}`);
+}
+
+function error(message: string): never {
+  log(`❌ Error: ${message}`, Color.Red);
+  process.exit(1);
+}
+
+function success(message: string): void {
+  log(`✅ ${message}`, Color.Green);
+}
+
+function info(message: string): void {
+  log(`ℹ️  ${message}`, Color.Blue);
+}
+
+// Example configuration interface
 interface ExampleConfig {
-  name: string;
-  category: string;
+  contract: string;
+  test: string;
+  testFixture?: string;
   description: string;
-  contractName: string;
-  outputDir: string;
+  category: string;
 }
 
-/**
- * Parse command line arguments
- * @example --name CounterExample --category basic --description "FHE Counter"
- */
-function parseArguments(): Partial<ExampleConfig> {
-  const args = process.argv.slice(2);
-  const config: Partial<ExampleConfig> = {};
-
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--name" && i + 1 < args.length) {
-      config.name = args[i + 1];
-      config.contractName = args[i + 1].replace(/-/g, "");
-      i++;
-    } else if (args[i] === "--category" && i + 1 < args.length) {
-      config.category = args[i + 1];
-      i++;
-    } else if (args[i] === "--description" && i + 1 < args.length) {
-      config.description = args[i + 1];
-      i++;
-    } else if (args[i] === "--output" && i + 1 < args.length) {
-      config.outputDir = args[i + 1];
-      i++;
-    }
-  }
-
-  return config;
-}
-
-/**
- * Validate example configuration
- */
-function validateConfig(config: Partial<ExampleConfig>): config is ExampleConfig {
-  if (!config.name) {
-    console.error("❌ Error: --name parameter is required");
-    return false;
-  }
-  if (!config.category) {
-    console.error("❌ Error: --category parameter is required");
-    return false;
-  }
-  if (!config.contractName) {
-    console.error("❌ Error: Could not determine contract name");
-    return false;
-  }
-  return true;
-}
-
-/**
- * Create directory structure
- */
-function createDirectoryStructure(config: ExampleConfig): void {
-  const dirs = [
-    config.outputDir,
-    path.join(config.outputDir, "contracts"),
-    path.join(config.outputDir, "test"),
-    path.join(config.outputDir, "scripts"),
-    path.join(config.outputDir, "docs"),
-  ];
-
-  for (const dir of dirs) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`✓ Created directory: ${dir}`);
-    }
-  }
-}
-
-/**
- * Generate Solidity contract template
- * @chapter: tag for documentation generation
- */
-function generateContract(config: ExampleConfig): string {
-  return `// SPDX-License-Identifier: BSD-3-Clause-Clear
-pragma solidity ^0.8.24;
-
-import { FHE, euint32, euint64 } from "@fhevm/solidity/lib/FHE.sol";
-import { SepoliaConfig } from "@fhevm/solidity/config/ZamaConfig.sol";
-
-/**
- * @title ${config.contractName}
- * @notice ${config.description}
- * @dev Example implementation for category: ${config.category}
- * @chapter: ${config.category}
- */
-contract ${config.contractName} is SepoliaConfig {
-
-  address public owner;
-
-  event ContractDeployed(address indexed owner);
-
-  constructor() {
-    owner = msg.sender;
-    emit ContractDeployed(msg.sender);
-  }
-
-  /**
-   * @notice Example function demonstrating FHE operations
-   * @dev This is a placeholder for your encrypted logic
-   * @param _value The plaintext value to encrypt
-   * @return The encrypted value handle
-   */
-  function encryptValue(uint32 _value) external pure returns (euint32) {
-    return FHE.asEuint32(_value);
-  }
-
-  /**
-   * @notice Grant permissions for encrypted value
-   * @param _value The encrypted value
-   * @param _address The address to grant access to
-   */
-  function grantAccess(euint32 _value, address _address) external {
-    FHE.allow(_value, _address);
-  }
-}
-`;
-}
-
-/**
- * Generate test file template
- */
-function generateTest(config: ExampleConfig): string {
-  return `/**
- * @chapter: ${config.category}
- * Tests for ${config.contractName}
- *
- * This test suite validates:
- * - Contract deployment
- * - Encryption operations
- * - Permission management
- * - FHE operations correctness
- */
-
-import { expect } from "chai";
-import { ethers } from "hardhat";
-
-describe("${config.contractName}", () => {
-  let contract;
-  let owner;
-  let user1;
-
-  before(async () => {
-    // Get signers
-    const signers = await ethers.getSigners();
-    [owner, user1] = signers;
-
-    // Deploy contract
-    const Factory = await ethers.getContractFactory("${config.contractName}");
-    contract = await Factory.deploy();
-    await contract.deployed();
-  });
-
-  describe("Deployment", () => {
-    it("Should deploy successfully", async () => {
-      expect(contract.address).to.not.be.undefined;
-    });
-
-    it("Should set owner correctly", async () => {
-      expect(await contract.owner()).to.equal(owner.address);
-    });
-
-    it("Should emit ContractDeployed event", async () => {
-      const Factory = await ethers.getContractFactory("${config.contractName}");
-      const tx = await Factory.deploy();
-      await expect(tx.deployTransaction).to.emit(contract, "ContractDeployed");
-    });
-  });
-
-  describe("FHE Operations", () => {
-    it("Should encrypt values", async () => {
-      const value = 42;
-      const encrypted = await contract.encryptValue(value);
-      expect(encrypted).to.not.be.undefined;
-    });
-
-    it("Should grant access permissions", async () => {
-      const value = await contract.encryptValue(100);
-      const tx = await contract.grantAccess(value, user1.address);
-      await expect(tx).to.not.be.reverted;
-    });
-  });
-
-  describe("Access Control", () => {
-    it("Should enforce permission checks", async () => {
-      // Add permission validation tests
-      expect(true).to.be.true;
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("Should handle zero values", async () => {
-      const encrypted = await contract.encryptValue(0);
-      expect(encrypted).to.not.be.undefined;
-    });
-
-    it("Should handle maximum values", async () => {
-      const maxValue = (2 ** 32) - 1;
-      const encrypted = await contract.encryptValue(maxValue);
-      expect(encrypted).to.not.be.undefined;
-    });
-  });
-});
-`;
-}
-
-/**
- * Generate documentation template
- */
-function generateDocumentation(config: ExampleConfig): string {
-  return `# ${config.name}
-
-## Overview
-
-This example demonstrates the \`${config.category}\` category of FHEVM operations.
-
-**Learning Objectives:**
-- Understand how to encrypt data
-- Learn permission management patterns
-- Implement FHE operations safely
-- Write comprehensive tests
-
-## Concepts Covered
-
-### Chapter: ${config.category}
-
-${config.description}
-
-## Smart Contract
-
-\`\`\`solidity
-contract ${config.contractName} is SepoliaConfig {
-  // Encrypted operations demonstration
-}
-\`\`\`
-
-## Key Functions
-
-### encryptValue
-- **Purpose**: Encrypt a plaintext value
-- **FHE Type**: euint32
-- **Usage**: Called before storing encrypted data
-
-### grantAccess
-- **Purpose**: Grant decryption permissions
-- **FHE Operation**: FHE.allow()
-- **Usage**: After creating encrypted value
-
-## Testing
-
-Run tests with:
-\`\`\`bash
-npx hardhat test
-\`\`\`
-
-Test coverage includes:
-- ✓ Deployment validation
-- ✓ FHE encryption operations
-- ✓ Permission management
-- ✓ Edge cases and error handling
-
-## Common Patterns
-
-### ✓ DO: Grant Permissions After Encryption
-\`\`\`solidity
-euint32 encrypted = FHE.asEuint32(value);
-FHE.allowThis(encrypted);
-FHE.allow(encrypted, msg.sender);
-\`\`\`
-
-### ✗ DON'T: Access Without Permissions
-\`\`\`solidity
-// This will fail - no permissions granted
-euint32 encrypted = FHE.asEuint32(value);
-// Try to use encrypted without FHE.allow()
-\`\`\`
-
-## Integration Example
-
-\`\`\`typescript
-// Connect to contract
-const contract = await ethers.getContractAt(
-  "${config.contractName}",
-  contractAddress
-);
-
-// Encrypt value
-const encrypted = await contract.encryptValue(42);
-
-// Grant access
-await contract.grantAccess(encrypted, userAddress);
-\`\`\`
-
-## References
-
-- [FHEVM Documentation](https://docs.zama.ai/)
-- [FHE Operations Reference](https://github.com/zama-ai/fhevm)
-- [Related Example](../README.md)
-
-## What's Next?
-
-1. Modify the contract to add more FHE operations
-2. Extend test suite with additional cases
-3. Add event logging for state changes
-4. Implement access control patterns
-
----
-
-**Category**: ${config.category}
-**Difficulty**: Intermediate
-**Last Updated**: $(date +%Y-%m-%d)
-`;
-}
-
-/**
- * Generate package.json for example
- */
-function generatePackageJson(config: ExampleConfig): string {
-  return JSON.stringify(
-    {
-      name: \`fhevm-example-\${config.name.toLowerCase()}\`,
-      version: "1.0.0",
-      description: config.description,
-      scripts: {
-        compile: "hardhat compile",
-        test: "hardhat test",
-        deploy: "hardhat run scripts/deploy.ts --network sepolia",
-      },
-      keywords: ["fhevm", "ethereum", config.category, "privacy"],
-      author: "FHEVM Examples",
-      license: "MIT",
-      devDependencies: {
-        "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-        "@fhevm/solidity": "^0.1.0",
-        hardhat: "^2.20.0",
-        typescript: "^5.0.0",
-      },
-    },
-    null,
-    2
-  );
-}
-
-/**
- * Create files in output directory
- */
-function createFiles(config: ExampleConfig): void {
-  const contract = generateContract(config);
-  const test = generateTest(config);
-  const docs = generateDocumentation(config);
-  const pkg = generatePackageJson(config);
-
-  // Write contract
-  const contractPath = path.join(
-    config.outputDir,
-    "contracts",
-    \`\${config.contractName}.sol\`
-  );
-  fs.writeFileSync(contractPath, contract);
-  console.log(\`✓ Created contract: \${contractPath}\`);
-
-  // Write test
-  const testPath = path.join(
-    config.outputDir,
-    "test",
-    \`\${config.contractName}.test.ts\`
-  );
-  fs.writeFileSync(testPath, test);
-  console.log(\`✓ Created test: \${testPath}\`);
-
-  // Write documentation
-  const docPath = path.join(config.outputDir, "docs", "README.md");
-  fs.writeFileSync(docPath, docs);
-  console.log(\`✓ Created documentation: \${docPath}\`);
-
-  // Write package.json
-  const pkgPath = path.join(config.outputDir, "package.json");
-  fs.writeFileSync(pkgPath, pkg);
-  console.log(\`✓ Created package.json: \${pkgPath}\`);
-
-  // Copy hardhat.config.ts
-  const hardhatConfig = \`import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "@typechain/hardhat";
-import "solidity-coverage";
-import * as dotenv from "dotenv";
-
-dotenv.config();
-
-const config: HardhatUserConfig = {
-  solidity: {
-    version: "0.8.24",
-    settings: { optimizer: { enabled: true, runs: 200 } },
+// Map of example names to their contract and test paths
+const EXAMPLES_MAP: Record<string, ExampleConfig> = {
+  // Privacy-Preserving Delivery Examples
+  'delivery-manager': {
+    contract: 'contracts/DeliveryManager.sol',
+    test: 'test/DeliveryManager.test.ts',
+    description: 'Core delivery management with encrypted addresses and privacy-preserving matching',
+    category: 'privacy-delivery',
   },
-  networks: {
-    localhost: { url: "http://127.0.0.1:8545" },
-    sepolia: {
-      url: process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 11155111,
-    },
+  'payment-processor': {
+    contract: 'contracts/PaymentProcessor.sol',
+    test: 'test/PaymentProcessor.test.ts',
+    description: 'Confidential payment processing with encrypted amounts and automatic escrow',
+    category: 'privacy-delivery',
+  },
+  'reputation-tracker': {
+    contract: 'contracts/ReputationTracker.sol',
+    test: 'test/ReputationTracker.test.ts',
+    description: 'Anonymous reputation system with encrypted ratings and zero-knowledge verification',
+    category: 'privacy-delivery',
+  },
+  'privacy-layer': {
+    contract: 'contracts/PrivacyLayer.sol',
+    test: 'test/PrivacyLayer.test.ts',
+    description: 'FHE utility functions for address encryption and privacy-preserving operations',
+    category: 'privacy-delivery',
+  },
+  'anonymous-delivery': {
+    contract: 'contracts/AnonymousDelivery.sol',
+    test: 'test/AnonymousDelivery.test.ts',
+    description: 'Complete anonymous delivery platform demonstrating full FHE integration',
+    category: 'privacy-delivery',
+  },
+
+  // Basic FHE Examples
+  'fhe-counter': {
+    contract: 'contracts/basic/FHECounter.sol',
+    test: 'test/basic/FHECounter.test.ts',
+    description: 'Simple FHE counter demonstrating basic encrypted operations (increment, decrement)',
+    category: 'basic',
+  },
+  'fhe-add': {
+    contract: 'contracts/basic/fhe-operations/FHEAdd.sol',
+    test: 'test/basic/fhe-operations/FHEAdd.test.ts',
+    description: 'FHE addition operations on encrypted values',
+    category: 'basic-operations',
+  },
+  'fhe-comparison': {
+    contract: 'contracts/basic/fhe-operations/FHEComparison.sol',
+    test: 'test/basic/fhe-operations/FHEComparison.test.ts',
+    description: 'FHE comparison operations (eq, lt, gt, le, ge) on encrypted values',
+    category: 'basic-operations',
+  },
+  'fhe-if-then-else': {
+    contract: 'contracts/basic/fhe-operations/FHEIfThenElse.sol',
+    test: 'test/basic/fhe-operations/FHEIfThenElse.test.ts',
+    description: 'Conditional operations on encrypted values without revealing the condition',
+    category: 'basic-operations',
+  },
+
+  // Encryption Examples
+  'encrypt-single-value': {
+    contract: 'contracts/basic/encrypt/EncryptSingleValue.sol',
+    test: 'test/basic/encrypt/EncryptSingleValue.test.ts',
+    description: 'FHE encryption mechanism and common pitfalls',
+    category: 'encryption',
+  },
+  'encrypt-multiple-values': {
+    contract: 'contracts/basic/encrypt/EncryptMultipleValues.sol',
+    test: 'test/basic/encrypt/EncryptMultipleValues.test.ts',
+    description: 'Encryption and handling of multiple encrypted values',
+    category: 'encryption',
+  },
+
+  // Decryption Examples
+  'user-decrypt-single-value': {
+    contract: 'contracts/basic/decrypt/UserDecryptSingleValue.sol',
+    test: 'test/basic/decrypt/UserDecryptSingleValue.test.ts',
+    description: 'User decryption with proper permission requirements',
+    category: 'decryption',
+  },
+  'user-decrypt-multiple-values': {
+    contract: 'contracts/basic/decrypt/UserDecryptMultipleValues.sol',
+    test: 'test/basic/decrypt/UserDecryptMultipleValues.test.ts',
+    description: 'User decryption of multiple encrypted values',
+    category: 'decryption',
+  },
+  'public-decrypt-single-value': {
+    contract: 'contracts/basic/decrypt/PublicDecryptSingleValue.sol',
+    test: 'test/basic/decrypt/PublicDecryptSingleValue.test.ts',
+    description: 'Public decryption mechanism for non-sensitive encrypted data',
+    category: 'decryption',
+  },
+  'public-decrypt-multiple-values': {
+    contract: 'contracts/basic/decrypt/PublicDecryptMultipleValues.sol',
+    test: 'test/basic/decrypt/PublicDecryptMultipleValues.test.ts',
+    description: 'Public decryption of multiple encrypted values',
+    category: 'decryption',
+  },
+
+  // Access Control Examples
+  'access-control': {
+    contract: 'contracts/basic/AccessControl.sol',
+    test: 'test/basic/AccessControl.test.ts',
+    description: 'FHE access control patterns (FHE.allow, FHE.allowTransient)',
+    category: 'access-control',
+  },
+
+  // Auction Examples
+  'blind-auction': {
+    contract: 'contracts/auctions/BlindAuction.sol',
+    test: 'test/auctions/BlindAuction.test.ts',
+    description: 'Sealed-bid auction with encrypted bids using FHE',
+    category: 'auctions',
   },
 };
 
-export default config;\`;
-
-  const hardhatPath = path.join(config.outputDir, "hardhat.config.ts");
-  if (!fs.existsSync(hardhatPath)) {
-    fs.writeFileSync(hardhatPath, hardhatConfig);
-    console.log(\`✓ Created hardhat config: \${hardhatPath}\`);
+function copyDirectoryRecursive(source: string, destination: string): void {
+  if (!fs.existsSync(destination)) {
+    fs.mkdirSync(destination, { recursive: true });
   }
+
+  const items = fs.readdirSync(source);
+
+  items.forEach(item => {
+    const sourcePath = path.join(source, item);
+    const destPath = path.join(destination, item);
+    const stat = fs.statSync(sourcePath);
+
+    if (stat.isDirectory()) {
+      // Skip node_modules, artifacts, cache, etc.
+      if (['node_modules', 'artifacts', 'cache', 'coverage', 'types', 'dist'].includes(item)) {
+        return;
+      }
+      copyDirectoryRecursive(sourcePath, destPath);
+    } else {
+      fs.copyFileSync(sourcePath, destPath);
+    }
+  });
 }
 
-/**
- * Main execution
- */
-async function main(): Promise<void> {
-  console.log("🚀 Creating FHEVM Example...\n");
+function getContractName(contractPath: string): string | null {
+  const content = fs.readFileSync(contractPath, 'utf-8');
+  // Match contract declaration, ignoring comments and ensuring it's followed by 'is' or '{'
+  const match = content.match(/^\s*contract\s+(\w+)(?:\s+is\s+|\s*\{)/m);
+  return match ? match[1] : null;
+}
 
-  const args = parseArguments();
+function updateDeployScript(outputDir: string, contractName: string): void {
+  const deployScriptPath = path.join(outputDir, 'deploy', 'deploy.ts');
 
-  if (!validateConfig(args)) {
-    process.exit(1);
+  const deployScript = `import { DeployFunction } from "hardhat-deploy/types";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+
+const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  const { deployer } = await hre.getNamedAccounts();
+  const { deploy } = hre.deployments;
+
+  const deployed${contractName} = await deploy("${contractName}", {
+    from: deployer,
+    log: true,
+  });
+
+  console.log(\`${contractName} contract: \`, deployed${contractName}.address);
+};
+export default func;
+func.id = "deploy_${contractName.toLowerCase()}";
+func.tags = ["${contractName}"];
+`;
+
+  fs.writeFileSync(deployScriptPath, deployScript);
+}
+
+function updatePackageJson(outputDir: string, exampleName: string, description: string): void {
+  const packageJsonPath = path.join(outputDir, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
+  packageJson.name = `fhevm-example-${exampleName}`;
+  packageJson.description = description;
+  packageJson.homepage = `https://github.com/your-username/fhevm-examples/${exampleName}`;
+
+  fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+}
+
+function generateReadme(exampleName: string, description: string, contractName: string, category: string): string {
+  return `# FHEVM Example: ${exampleName}
+
+${description}
+
+## Category
+
+${category}
+
+## Quick Start
+
+### Prerequisites
+
+- **Node.js**: Version 20 or higher
+- **npm**: Package manager
+
+### Installation
+
+1. **Install dependencies**
+
+   \`\`\`bash
+   npm install
+   \`\`\`
+
+2. **Set up environment variables**
+
+   \`\`\`bash
+   npx hardhat vars set MNEMONIC
+   npx hardhat vars set INFURA_API_KEY
+   # Optional: Set Etherscan API key for contract verification
+   npx hardhat vars set ETHERSCAN_API_KEY
+   \`\`\`
+
+3. **Compile and test**
+
+   \`\`\`bash
+   npm run compile
+   npm run test
+   \`\`\`
+
+## Contract
+
+The main contract is \`${contractName}\` located in \`contracts/${contractName}.sol\`.
+
+### Key Features
+
+- **Privacy-Preserving**: Uses Fully Homomorphic Encryption (FHE) for confidential operations
+- **Zero-Knowledge Proofs**: Enables verification without revealing sensitive data
+- **Decentralized**: Built on blockchain for transparency and immutability
+
+## Testing
+
+Run the test suite:
+
+\`\`\`bash
+npm run test
+\`\`\`
+
+For Sepolia testnet testing:
+
+\`\`\`bash
+npm run test:sepolia
+\`\`\`
+
+## Deployment
+
+Deploy to local network:
+
+\`\`\`bash
+npx hardhat node
+npx hardhat deploy --network localhost
+\`\`\`
+
+Deploy to Sepolia:
+
+\`\`\`bash
+npx hardhat deploy --network sepolia
+npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
+\`\`\`
+
+## Documentation
+
+- [FHEVM Documentation](https://docs.zama.ai/fhevm)
+- [FHEVM Examples](https://docs.zama.org/protocol/examples)
+- [FHEVM Hardhat Plugin](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat)
+
+## License
+
+This project is licensed under the BSD-3-Clause-Clear License.
+
+---
+
+**Built with FHEVM by Zama**
+`;
+}
+
+function createExample(exampleName: string, outputDir: string): void {
+  const rootDir = path.resolve(__dirname, '..');
+  const templateDir = path.join(rootDir, 'base-template');
+
+  // Check if example exists
+  if (!EXAMPLES_MAP[exampleName]) {
+    error(`Unknown example: ${exampleName}\n\nAvailable examples:\n${Object.keys(EXAMPLES_MAP).map(k => `  - ${k}`).join('\n')}`);
   }
 
-  const config: ExampleConfig = {
-    name: args.name,
-    category: args.category,
-    description: args.description || \`Example for \${args.category} category\`,
-    contractName: args.contractName,
-    outputDir: args.outputDir || path.join("./examples", args.name),
-  };
+  const example = EXAMPLES_MAP[exampleName];
+  const contractPath = path.join(rootDir, example.contract);
+  const testPath = path.join(rootDir, example.test);
 
-  console.log("📋 Configuration:");
-  console.log(\`  Name: \${config.name}\`);
-  console.log(\`  Category: \${config.category}\`);
-  console.log(\`  Output: \${config.outputDir}\`);
-  console.log(\`  Contract: \${config.contractName}\n\`);
-
-  try {
-    createDirectoryStructure(config);
-    createFiles(config);
-
-    console.log(\`
-✅ Example created successfully!
-
-Next steps:
-1. cd \${config.outputDir}
-2. npm install
-3. npm test
-4. npm run deploy -- --network sepolia
-
-Documentation: \${config.outputDir}/docs/README.md
-\`);
-  } catch (error) {
-    console.error("❌ Error creating example:", error);
-    process.exit(1);
+  // Validate paths exist
+  if (!fs.existsSync(contractPath)) {
+    error(`Contract not found: ${example.contract}`);
   }
+  if (!fs.existsSync(testPath)) {
+    error(`Test not found: ${example.test}`);
+  }
+
+  info(`Creating FHEVM example: ${exampleName}`);
+  info(`Output directory: ${outputDir}`);
+
+  // Step 1: Copy template
+  log('\n📋 Step 1: Copying template...', Color.Cyan);
+  if (fs.existsSync(outputDir)) {
+    error(`Output directory already exists: ${outputDir}`);
+  }
+
+  // If template doesn't exist, use current directory structure
+  if (!fs.existsSync(templateDir)) {
+    info('Base template not found, creating from current structure...');
+    fs.mkdirSync(outputDir, { recursive: true });
+    fs.mkdirSync(path.join(outputDir, 'contracts'), { recursive: true });
+    fs.mkdirSync(path.join(outputDir, 'test'), { recursive: true });
+    fs.mkdirSync(path.join(outputDir, 'deploy'), { recursive: true });
+
+    // Copy essential files
+    const essentialFiles = ['hardhat.config.ts', 'package.json', 'tsconfig.json', '.gitignore', '.solhintrc.json'];
+    essentialFiles.forEach(file => {
+      const src = path.join(rootDir, file);
+      if (fs.existsSync(src)) {
+        fs.copyFileSync(src, path.join(outputDir, file));
+      }
+    });
+  } else {
+    copyDirectoryRecursive(templateDir, outputDir);
+  }
+  success('Template copied');
+
+  // Step 2: Copy contract and dependencies
+  log('\n📄 Step 2: Copying contract...', Color.Cyan);
+  const contractName = getContractName(contractPath);
+  if (!contractName) {
+    error('Could not extract contract name from contract file');
+  }
+  const destContractPath = path.join(outputDir, 'contracts', `${contractName}.sol`);
+
+  fs.copyFileSync(contractPath, destContractPath);
+  success(`Contract copied: ${contractName}.sol`);
+
+  // Copy interfaces and libs if they exist
+  const interfacesDir = path.join(rootDir, 'contracts', 'interfaces');
+  const libsDir = path.join(rootDir, 'contracts', 'libs');
+
+  if (fs.existsSync(interfacesDir)) {
+    copyDirectoryRecursive(interfacesDir, path.join(outputDir, 'contracts', 'interfaces'));
+    success('Interfaces copied');
+  }
+
+  if (fs.existsSync(libsDir)) {
+    copyDirectoryRecursive(libsDir, path.join(outputDir, 'contracts', 'libs'));
+    success('Libraries copied');
+  }
+
+  // Step 3: Copy test
+  log('\n🧪 Step 3: Copying test...', Color.Cyan);
+  const destTestPath = path.join(outputDir, 'test', path.basename(testPath));
+
+  fs.copyFileSync(testPath, destTestPath);
+  success(`Test copied: ${path.basename(testPath)}`);
+
+  // Copy test fixture if it exists
+  if (example.testFixture) {
+    const fixtureSourcePath = path.join(rootDir, example.testFixture);
+    if (fs.existsSync(fixtureSourcePath)) {
+      const destFixturePath = path.join(outputDir, 'test', path.basename(example.testFixture));
+      fs.copyFileSync(fixtureSourcePath, destFixturePath);
+      success(`Test fixture copied: ${path.basename(example.testFixture)}`);
+    }
+  }
+
+  // Step 4: Update configuration files
+  log('\n⚙️  Step 4: Updating configuration...', Color.Cyan);
+  updateDeployScript(outputDir, contractName);
+  updatePackageJson(outputDir, exampleName, example.description);
+  success('Configuration updated');
+
+  // Step 5: Generate README
+  log('\n📝 Step 5: Generating README...', Color.Cyan);
+  const readme = generateReadme(exampleName, example.description, contractName, example.category);
+  fs.writeFileSync(path.join(outputDir, 'README.md'), readme);
+  success('README.md generated');
+
+  // Final summary
+  log('\n' + '='.repeat(60), Color.Green);
+  success(`FHEVM example "${exampleName}" created successfully!`);
+  log('='.repeat(60), Color.Green);
+
+  log('\n📦 Next steps:', Color.Yellow);
+  log(`  cd ${path.relative(process.cwd(), outputDir)}`);
+  log('  npm install');
+  log('  npm run compile');
+  log('  npm run test');
+
+  log('\n🎉 Happy coding with FHEVM!', Color.Cyan);
+}
+
+// Main execution
+function main(): void {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
+    log('FHEVM Example Generator', Color.Cyan);
+    log('\nUsage: ts-node scripts/create-fhevm-example.ts <example-name> [output-dir]\n');
+    log('Available examples:', Color.Yellow);
+    Object.entries(EXAMPLES_MAP).forEach(([name, info]) => {
+      log(`  ${name}`, Color.Green);
+      log(`    ${info.description}`, Color.Reset);
+    });
+    log('\nExample:', Color.Yellow);
+    log('  ts-node scripts/create-fhevm-example.ts delivery-manager ./output/delivery-manager\n');
+    process.exit(0);
+  }
+
+  const exampleName = args[0];
+  const outputDir = args[1] || path.join(process.cwd(), 'output', `fhevm-example-${exampleName}`);
+
+  createExample(exampleName, outputDir);
 }
 
 main();
